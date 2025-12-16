@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{C2511645-42D3-4E23-B893-E86B37335BCC}</ProjectGuid>
+    <RootNamespace>dahax</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <!-- ================= Debug / Release configs ================= -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <!-- ================= Debug x64 Include Fix ================= -->
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PublicIncludeDirectories>$(ProjectDir)MinHook\include</PublicIncludeDirectories>
+  </PropertyGroup>
+  <!-- ================= Win32 Build Rules ================= -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;DAHAX_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;DAHAX_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <!-- ================= Debug x64 Build Rules ================= -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;DAHAX_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>
+        $(ProjectDir);
+        $(ProjectDir)imgui;
+        $(ProjectDir)MinHook\include;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>
+        d3d12.lib;
+        dxgi.lib;
+        d3dcompiler.lib;
+        user32.lib;
+        MinHook.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+        $(ProjectDir)MinHook\lib;
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <!-- ================= Release x64 Build Rules ================= -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>NDEBUG;DAHAX_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <AdditionalIncludeDirectories>
+        $(ProjectDir);
+        $(ProjectDir)ImGui;
+        $(ProjectDir)MinHook\include;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>
+        d3d12.lib;
+        dxgi.lib;
+        d3dcompiler.lib;
+        user32.lib;
+        MinHook.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+        $(ProjectDir)MinHook\lib;
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <!-- ================= HEADERS ================= -->
+  <ItemGroup>
+    <ClInclude Include="Aimbot.h" />
+    <ClInclude Include="AimbotCache.h" />
+    <ClInclude Include="AimbotDebug.h" />
+    <ClInclude Include="Helpers.h" />
+    <ClInclude Include="MinHook\include\MinHook.h" />
+    <!-- SDK (apenas os arquivos que estavam no seu projeto) -->
+    <ClInclude Include="SDK.hpp" />
+    <ClInclude Include="SDK\AI_Humanoid_classes.hpp" />
+    <ClInclude Include="SDK\ALS_AnimMan_CharacterBP_classes.hpp" />
+    <ClInclude Include="SDK\ALS_AnimMan_CharacterBP_parameters.hpp" />
+    <ClInclude Include="SDK\Basic.hpp" />
+    <ClInclude Include="SDK\BP_Drone_classes.hpp" />
+    <ClInclude Include="SDK\BP_Drone_parameters.hpp" />
+    <ClInclude Include="SDK\CoreUObject_classes.hpp" />
+    <ClInclude Include="SDK\CoreUObject_structs.hpp" />
+    <ClInclude Include="SDK\Engine_classes.hpp" />
+    <ClInclude Include="SDK\Engine_parameters.hpp" />
+    <ClInclude Include="SDK\PC_BodycamBase_classes.hpp" />
+    <ClInclude Include="SDK\PC_Bodycam_classes.hpp" />
+    <ClInclude Include="SDK\WBP_DroneInterface_classes.hpp" />
+    <ClInclude Include="SDK\WW_SurvivorStatus_classes.hpp" />
+    <ClInclude Include="SharedMemory.h" />
+    <ClInclude Include="SharedPayload.h" />
+    <ClInclude Include="SharedSender.h" />
+  </ItemGroup>
+  <!-- ================= CPP FILES ================= -->
+  <ItemGroup>
+    <ClCompile Include="Aimbot.cpp" />
+    <ClCompile Include="AimbotCache.cpp" />
+    <ClCompile Include="AimbotDebug.cpp" />
+    <ClCompile Include="Cache.cpp" />
+    <ClCompile Include="Cache.h" />
+    <ClCompile Include="dllmain.cpp" />
+    <!-- EXCLUÍDOS NO DEBUG X64 COMO ANTES -->
+    <!-- IMGUI -->
+    <!-- SDK FUNCTIONS (apenas os que estavam no seu projeto original) -->
+    <ClCompile Include="SDK\Basic.cpp" />
+    <ClCompile Include="SDK\BP_Drone_functions.cpp" />
+    <ClCompile Include="SDK\CoreUObject_functions.cpp" />
+    <ClCompile Include="SDK\Engine_functions.cpp" />
+    <ClCompile Include="SDK\EngineCameras_functions.cpp" />
+    <ClCompile Include="SDK\ALS_AnimMan_CharacterBP_functions.cpp" />
+    <ClCompile Include="SDK\AI_Humanoid_functions.cpp" />
+    <ClCompile Include="SDK\PC_BodycamBase_functions.cpp" />
+    <ClCompile Include="SDK\PC_Bodycam_functions.cpp" />
+    <ClCompile Include="SDK\WBP_DroneInterface_functions.cpp" />
+    <ClCompile Include="SDK\WW_SurvivorStatus_functions.cpp" />
+    <ClCompile Include="SharedMemory.cpp" />
+    <ClCompile Include="SharedSender.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

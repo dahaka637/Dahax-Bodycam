@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Arquivos de Origem">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Recurso">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\Sdk_Things">
+      <UniqueIdentifier>{669193d6-f16e-48cf-b299-395d3a4c17ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\SDK">
+      <UniqueIdentifier>{39b13ce0-a759-467c-8088-16f1c2a1674b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\features">
+      <UniqueIdentifier>{4ae32fcc-045b-43df-8849-560ba9bb400b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\MinHook">
+      <UniqueIdentifier>{2b539a79-eb6d-4e09-842d-206dddbb9cba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\MinHook\include">
+      <UniqueIdentifier>{5847a4a8-efd6-4e0e-b2d2-31b296ed49e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SDK.hpp">
+      <Filter>Arquivos de Cabeçalho\Sdk_Things</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Basic.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Engine_parameters.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\CoreUObject_structs.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\CoreUObject_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\AI_Humanoid_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Engine_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\WW_SurvivorStatus_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\ALS_AnimMan_CharacterBP_parameters.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\PC_Bodycam_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\PC_BodycamBase_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\ALS_AnimMan_CharacterBP_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="MinHook\include\MinHook.h">
+      <Filter>Arquivos de Cabeçalho\MinHook\include</Filter>
+    </ClInclude>
+    <ClInclude Include="Helpers.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory.h">
+      <Filter>Arquivos de Origem</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedSender.h">
+      <Filter>Arquivos de Origem</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedPayload.h">
+      <Filter>Arquivos de Origem</Filter>
+    </ClInclude>
+    <ClInclude Include="AimbotCache.h">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClInclude>
+    <ClInclude Include="AimbotDebug.h">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClInclude>
+    <ClInclude Include="Aimbot.h">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\WBP_DroneInterface_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\BP_Drone_parameters.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\BP_Drone_classes.hpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\EngineCameras_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\Engine_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\AI_Humanoid_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\Basic.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\CoreUObject_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\PC_Bodycam_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\PC_BodycamBase_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\WW_SurvivorStatus_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\ALS_AnimMan_CharacterBP_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="Cache.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClCompile>
+    <ClCompile Include="Cache.cpp">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedSender.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="AimbotCache.cpp">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClCompile>
+    <ClCompile Include="AimbotDebug.cpp">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClCompile>
+    <ClCompile Include="Aimbot.cpp">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\BP_Drone_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+    <ClCompile Include="SDK\WBP_DroneInterface_functions.cpp">
+      <Filter>Arquivos de Cabeçalho\SDK</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

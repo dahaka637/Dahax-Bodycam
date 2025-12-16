@@ -1,0 +1,26 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# Build outputs
+x64/
+x86/
+Debug/
+Release/
+bin/
+obj/
+*.pdb
+*.idb
+*.ilk
+*.exp
+*.lib
+
+# Executáveis e DLLs
+*.exe
+*.dll
+
+# Logs
+*.log

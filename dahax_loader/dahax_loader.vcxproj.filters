@@ -1,0 +1,189 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Arquivos de Origem">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Recurso">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\imgui">
+      <UniqueIdentifier>{bc7ad25f-6825-4cad-84d7-1c1cfe5def34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\imgui\backends">
+      <UniqueIdentifier>{816148ca-118f-4582-bfc9-eecda7d772c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\merda">
+      <UniqueIdentifier>{bb0b191b-e749-416f-8733-8d7f177dfaef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Recurso\fonts">
+      <UniqueIdentifier>{51333cc4-5719-493d-8634-10cb432212c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\menu">
+      <UniqueIdentifier>{03947119-1ec5-495b-b239-0d768931a7d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Origem\menu">
+      <UniqueIdentifier>{a77b0626-1189-4383-b790-bd6c0d661c2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Arquivos de Cabeçalho\features">
+      <UniqueIdentifier>{59a89b81-6cda-4755-ad74-9584d99a51a6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="imgui\imconfig.h">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_internal.h">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_rectpack.h">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_textedit.h">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_truetype.h">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\backends\imgui_impl_dx11.h">
+      <Filter>Arquivos de Cabeçalho\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\backends\imgui_impl_win32.h">
+      <Filter>Arquivos de Cabeçalho\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Arquivos de Cabeçalho\merda</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Arquivos de Cabeçalho\merda</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Arquivos de Cabeçalho\merda</Filter>
+    </ClInclude>
+    <ClInclude Include="Overlay.h">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="OverlayConfig.h">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="Watermark.h">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="Injector.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedMemory.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="ExternalCache.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedIPC.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu_Debug.h">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="ESP.h">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClInclude>
+    <ClInclude Include="ESPHelper.h">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClInclude>
+    <ClInclude Include="Aimbot.h">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu.h">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="UIStyle.h">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClInclude>
+    <ClInclude Include="Offsets.h">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dahax_loader.cpp">
+      <Filter>Arquivos de Origem</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_tables.cpp">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_widgets.cpp">
+      <Filter>Arquivos de Cabeçalho\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>Arquivos de Cabeçalho\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backends\imgui_impl_win32.cpp">
+      <Filter>Arquivos de Cabeçalho\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="Overlay.cpp">
+      <Filter>Arquivos de Origem\menu</Filter>
+    </ClCompile>
+    <ClCompile Include="Watermark.cpp">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClCompile>
+    <ClCompile Include="Injector.cpp">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedMemory.cpp">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClCompile>
+    <ClCompile Include="ExternalCache.cpp">
+      <Filter>Arquivos de Cabeçalho</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu_Debug.cpp">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClCompile>
+    <ClCompile Include="ESP.cpp">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClCompile>
+    <ClCompile Include="ESPHelper.cpp">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu.cpp">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClCompile>
+    <ClCompile Include="Aimbot.cpp">
+      <Filter>Arquivos de Cabeçalho\features</Filter>
+    </ClCompile>
+    <ClCompile Include="UIStyle.cpp">
+      <Filter>Arquivos de Cabeçalho\menu</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="dahax_loader.rc">
+      <Filter>Arquivos de Recurso</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="small.ico">
+      <Filter>Arquivos de Recurso</Filter>
+    </Image>
+    <Image Include="dahax_loader.ico">
+      <Filter>Arquivos de Recurso</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="fonts\fa-solid-900.ttf">
+      <Filter>Arquivos de Recurso\fonts</Filter>
+    </Font>
+  </ItemGroup>
+</Project>
