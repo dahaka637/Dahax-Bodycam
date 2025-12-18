@@ -38,18 +38,26 @@ enum ActorFlags : uint8_t
 };
 
 // ======================================================
-// ENTIDADE EXTERNA
+// ENTIDADE EXTERNA (PLAYER / BOT)
 // ======================================================
 
 struct ExternalActor
 {
+    // --------------------------------------------------
+    // IDENTIDADE (NOVO)
+    // --------------------------------------------------
+    uint64_t actorAddress;   // <<< ENDEREÇO DO AActor (ID estável)
+
+    // --------------------------------------------------
+    // dados existentes
+    // --------------------------------------------------
     char name[MAX_NAME_LEN];
 
     int32_t team;
     float   health;
     uint8_t flags;
 
-    Vec3 location;
+    Vec3 location;           // fallback (DLL)
 
     Vec3    bones[BONE_COUNT];
     uint8_t boneValid[BONE_COUNT];
@@ -61,6 +69,14 @@ struct ExternalActor
 
 struct ExternalLocalPlayer
 {
+    // --------------------------------------------------
+    // IDENTIDADE (NOVO)
+    // --------------------------------------------------
+    uint64_t actorAddress;   // <<< ENDEREÇO DO Pawn local
+
+    // --------------------------------------------------
+    // dados existentes
+    // --------------------------------------------------
     Vec3     location;
     Vec3     cameraLocation;
     Rotator  cameraRotation;
@@ -83,7 +99,7 @@ namespace ExternalCache
     void Update();
 
     // Acessos thread-safe
-    ExternalLocalPlayer            GetLocal();
-    std::vector<ExternalActor>     GetPlayers();
-    std::vector<ExternalActor>     GetBots();
+    ExternalLocalPlayer        GetLocal();
+    std::vector<ExternalActor> GetPlayers();
+    std::vector<ExternalActor> GetBots();
 }

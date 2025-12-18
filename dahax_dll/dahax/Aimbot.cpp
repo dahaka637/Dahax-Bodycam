@@ -1,4 +1,4 @@
-#include "Aimbot.h"
+﻿#include "Aimbot.h"
 #include "SDK.hpp"
 #include "AimbotCache.h"
 
@@ -8,9 +8,10 @@
 #include <unordered_map>
 #include <algorithm>
 #include <chrono>
+#include <string>
 
 // ======================================================
-// DEFINI��ES
+// CONSTANTES
 // ======================================================
 
 #ifndef M_PI
@@ -18,126 +19,66 @@
 #endif
 
 // ======================================================
-// VECTORMATH
+// BONE DEFINITIONS
 // ======================================================
 
-namespace VectorMath
+struct BoneDef
 {
-    inline float Length(const SDK::FVector& v)
-    {
-        return std::sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
-    }
-
-    inline float Dot(const SDK::FVector& a, const SDK::FVector& b)
-    {
-        return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
-    }
-}
-
-using namespace VectorMath;
-
-// ======================================================
-// HIST�RICO DO ATOR (EST�VEL)
-// ======================================================
-
-struct ActorHistory
-{
-    struct Frame
-    {
-        SDK::FVector pos{};
-        SDK::FVector vel{};
-        std::chrono::steady_clock::time_point t;
-    };
-
-    std::vector<Frame> frames;
-    std::chrono::steady_clock::time_point lastUpdate{};
-    int lastTeam = -1;
-    bool wasAlive = false;
-
-    void Add(const SDK::FVector& p, int team, bool alive)
-    {
-        auto now = std::chrono::steady_clock::now();
-
-        if (team != lastTeam || (!wasAlive && alive))
-            frames.clear();
-
-        Frame f{};
-        f.pos = p;
-        f.t = now;
-
-        if (!frames.empty())
-        {
-            const Frame& last = frames.back();
-            float dt = std::chrono::duration<float>(now - last.t).count();
-
-            if (dt > 0.001f)
-            {
-                SDK::FVector inst{
-                    (p.X - last.pos.X) / dt,
-                    (p.Y - last.pos.Y) / dt,
-                    (p.Z - last.pos.Z) / dt
-                };
-
-                f.vel.X = last.vel.X * 0.65f + inst.X * 0.35f;
-                f.vel.Y = last.vel.Y * 0.65f + inst.Y * 0.35f;
-                f.vel.Z = last.vel.Z * 0.65f + inst.Z * 0.35f;
-            }
-        }
-
-        frames.push_back(f);
-        if (frames.size() > 10)
-            frames.erase(frames.begin());
-
-        lastUpdate = now;
-        lastTeam = team;
-        wasAlive = alive;
-    }
-
-    bool Valid() const
-    {
-        if (frames.size() < 3)
-            return false;
-
-        float age = std::chrono::duration<float>(
-            std::chrono::steady_clock::now() - lastUpdate).count();
-
-        return age < 0.8f;
-    }
-
-    SDK::FVector Predict(float t) const
-    {
-        const Frame& f = frames.back();
-        return {
-            f.pos.X + f.vel.X * t,
-            f.pos.Y + f.vel.Y * t,
-            f.pos.Z + f.vel.Z * t
-        };
-    }
+    const char* Name;
 };
 
-static std::unordered_map<uintptr_t, ActorHistory> g_History;
-
-// ======================================================
-// ANGLE UTILS
-// ======================================================
-
-static float NormalizeAngle(float a)
+static constexpr BoneDef BoneDefs[] =
 {
-    while (a > 180.f) a -= 360.f;
-    while (a < -180.f) a += 360.f;
-    return a;
+    { "pelvis" },        // 0
+    { "spine_03" },      // 1 - Chest
+    { "head" },          // 2 - Head
+    { "clavicle_l" },    // 3
+    { "upperarm_l" },    // 4
+    { "lowerarm_l" },    // 5
+    { "hand_l" },        // 6
+    { "clavicle_r" },    // 7
+    { "upperarm_r" },    // 8
+    { "lowerarm_r" },    // 9
+    { "hand_r" },        // 10
+    { "thigh_l" },       // 11
+    { "calf_l" },        // 12
+    { "foot_l" },        // 13
+    { "thigh_r" },       // 14
+    { "calf_r" },        // 15
+    { "foot_r" }         // 16
+};
+
+constexpr size_t BONE_COUNT = sizeof(BoneDefs) / sizeof(BoneDefs[0]);
+
+// ======================================================
+// POSSIBLE HEAD NAMES
+// ======================================================
+
+static const char* PossibleHeadBones[] =
+{
+    "head","Head","HEAD",
+    "Head_Socket","head_socket","HeadSocket","headSocket",
+    "head_01","Head_01","head_1","Head_1",
+    "skull","Skull","SKULL",
+    "face","Face","FACE",
+    "neck","neck_01","neck_02",
+    "c_head","C_Head",
+    nullptr
+};
+
+// ======================================================
+// VECTOR MATH
+// ======================================================
+
+static float Length(const SDK::FVector& v)
+{
+    return std::sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
 }
 
-static SDK::FRotator CalcLookAt(
-    const SDK::FVector& from,
-    const SDK::FVector& to)
+static float Dot(const SDK::FVector& a, const SDK::FVector& b)
 {
-    return SDK::UKismetMathLibrary::FindLookAtRotation(from, to);
+    return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
 }
-
-// ======================================================
-// FOV ANGULAR
-// ======================================================
 
 static float AngularDistance(
     const SDK::FRotator& view,
@@ -167,90 +108,367 @@ static float AngularDistance(
         std::sin(pr)
     };
 
-    float dot = Dot(viewDir, dir);
-    dot = std::clamp(dot, -1.f, 1.f);
-
+    float dot = std::clamp(Dot(viewDir, dir), -1.f, 1.f);
     return std::acos(dot) * (180.f / M_PI);
 }
 
-// ======================================================
-// BONE
-// ======================================================
 
-static bool GetBone(
-    SDK::USkeletalMeshComponent* mesh,
-    const char* name,
-    SDK::FVector& out)
+static float BonePreferenceBias(const std::string& lower)
 {
-    if (!mesh) return false;
+    // Região central (nenhuma penalização)
+    if (lower.find("pelvis") != std::string::npos ||
+        lower.find("spine") != std::string::npos ||
+        lower.find("chest") != std::string::npos ||
+        lower.find("neck") != std::string::npos ||
+        lower.find("head") != std::string::npos)
+    {
+        return 0.0f;
+    }
 
-    auto sockets = mesh->GetAllSocketNames();
+    // Braços / mãos (penalização leve)
+    if (lower.find("arm") != std::string::npos ||
+        lower.find("hand") != std::string::npos)
+    {
+        return 0.9f; // leve
+    }
+
+    // Pernas / pés (penalização um pouco maior)
+    if (lower.find("thigh") != std::string::npos ||
+        lower.find("calf") != std::string::npos ||
+        lower.find("foot") != std::string::npos)
+    {
+        return 1.3f;
+    }
+
+    // Outros sockets (neutro-leve)
+    return 0.6f;
+}
+
+
+static bool ResolveNearestBone(
+    SDK::USkeletalMeshComponent* Mesh,
+    const SDK::FRotator& camRot,
+    const SDK::FVector& camLoc,
+    SDK::FVector& outPos
+)
+{
+    if (!Mesh)
+        return false;
+
+    auto sockets = Mesh->GetAllSocketNames();
+
+    float bestScore = FLT_MAX;
+    bool found = false;
+
     for (int i = 0; i < sockets.Num(); i++)
     {
-        if (sockets[i].ToString() == name)
+        const auto& socket = sockets[i];
+
+        SDK::FVector pos = Mesh->GetSocketLocation(socket);
+
+        float ang = AngularDistance(camRot, pos, camLoc);
+
+        // Nome do osso
+        std::string name = socket.ToString();
+        std::string lower = name;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+        // Penalização leve por tipo de osso
+        float bias = BonePreferenceBias(lower);
+
+        // Score final
+        float score = ang + bias;
+
+        if (score < bestScore)
         {
-            out = mesh->GetSocketLocation(sockets[i]);
-            return true;
+            bestScore = score;
+            outPos = pos;
+            found = true;
         }
     }
-    return false;
+
+    return found;
+}
+
+
+// ======================================================
+// ANGLE UTILS
+// ======================================================
+
+static float NormalizeAngle(float a)
+{
+    while (a > 180.f) a -= 360.f;
+    while (a < -180.f) a += 360.f;
+    return a;
+}
+
+static SDK::FRotator CalcLookAt(
+    const SDK::FVector& from,
+    const SDK::FVector& to)
+{
+    return SDK::UKismetMathLibrary::FindLookAtRotation(from, to);
 }
 
 // ======================================================
-// PREDI��O FINAL (DOMINANTE)
+// HISTÓRICO DE MOVIMENTO BASEADO NO OSSO (PREDIÇÃO)
 // ======================================================
 
-static SDK::FVector PredictPosition(
+// ======================================================
+// HISTÓRICO DE MOVIMENTO DO ATOR (PREDIÇÃO)
+// ======================================================
+
+struct ActorHistory
+{
+    struct Frame
+    {
+        SDK::FVector pos;   // posição do ator
+        SDK::FVector vel;   // velocidade do ator
+        std::chrono::steady_clock::time_point t;
+    };
+
+    std::vector<Frame> frames;
+    std::chrono::steady_clock::time_point lastUpdate{};
+    int lastTeam = -1;
+    bool wasAlive = false;
+
+    // ==================================================
+    // Alimenta histórico com POSIÇÃO DO ATOR
+    // ==================================================
+    void Add(const SDK::FVector& actorPos, int team, bool alive)
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        // Reset em troca de alvo, time ou respawn
+        if (team != lastTeam || (!wasAlive && alive))
+            frames.clear();
+
+        Frame f{};
+        f.pos = actorPos;
+        f.t = now;
+
+        if (!frames.empty())
+        {
+            const auto& last = frames.back();
+            float dt = std::chrono::duration<float>(now - last.t).count();
+
+            if (dt > 0.001f)
+            {
+                SDK::FVector inst{
+                    (actorPos.X - last.pos.X) / dt,
+                    (actorPos.Y - last.pos.Y) / dt,
+                    (actorPos.Z - last.pos.Z) / dt
+                };
+
+                // EMA para suavizar jitter
+                f.vel.X = last.vel.X * 0.65f + inst.X * 0.35f;
+                f.vel.Y = last.vel.Y * 0.65f + inst.Y * 0.35f;
+                f.vel.Z = last.vel.Z * 0.65f + inst.Z * 0.35f;
+            }
+        }
+
+        frames.push_back(f);
+        if (frames.size() > 12)
+            frames.erase(frames.begin());
+
+        lastUpdate = now;
+        lastTeam = team;
+        wasAlive = alive;
+    }
+
+    // ==================================================
+    // Histórico válido?
+    // ==================================================
+    bool Valid() const
+    {
+        if (frames.size() < 3)
+            return false;
+
+        float age = std::chrono::duration<float>(
+            std::chrono::steady_clock::now() - lastUpdate
+        ).count();
+
+        return age < 0.6f;
+    }
+
+    // ==================================================
+    // Predição futura do ATOR
+    // ==================================================
+    SDK::FVector Predict(float t) const
+    {
+        const auto& f = frames.back();
+        return {
+            f.pos.X + f.vel.X * t,
+            f.pos.Y + f.vel.Y * t,
+            f.pos.Z + f.vel.Z * t
+        };
+    }
+};
+
+
+// ======================================================
+// HISTÓRICO GLOBAL (1 POR ATOR)
+// ======================================================
+
+static std::unordered_map<uintptr_t, ActorHistory> g_ActorHistory;
+
+
+// ======================================================
+// BONE RESOLVER
+// ======================================================
+
+static bool ResolveHeadBone(
+    SDK::USkeletalMeshComponent* Mesh,
+    SDK::FVector& out)
+{
+    if (!Mesh) return false;
+
+    auto sockets = Mesh->GetAllSocketNames();
+
+    for (int i = 0; i < sockets.Num(); i++)
+    {
+        std::string name = sockets[i].ToString();
+        std::string lower = name;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+        for (const char** p = PossibleHeadBones; *p; ++p)
+        {
+            if (name == *p)
+            {
+                out = Mesh->GetSocketLocation(sockets[i]);
+                return true;
+            }
+        }
+
+        if (lower.find("head") != std::string::npos ||
+            lower.find("skull") != std::string::npos ||
+            lower.find("face") != std::string::npos ||
+            lower.find("neck") != std::string::npos)
+        {
+            out = Mesh->GetSocketLocation(sockets[i]);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool ResolveChestBone(
+    SDK::USkeletalMeshComponent* Mesh,
+    SDK::FVector& out)
+{
+    if (!Mesh) return false;
+
+    auto sockets = Mesh->GetAllSocketNames();
+    for (int i = 0; i < sockets.Num(); i++)
+    {
+        if (sockets[i].ToString() == BoneDefs[1].Name)
+        {
+            out = Mesh->GetSocketLocation(sockets[i]);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// ======================================================
+// PREDIÇÃO FINAL (BASEADA NA POSIÇÃO DO ATOR)
+// ======================================================
+
+static SDK::FVector ApplyPrediction(
     SDK::AActor* actor,
-    const SDK::FVector& bonePos,
-    const SDK::FVector& camPos,
+    const SDK::FVector& bone,
+    const SDK::FVector& cam,
     float prediction,
-    float smooth,
     int team,
     bool alive)
 {
     if (!actor || prediction <= 0.f)
-        return bonePos;
+        return bone;
 
     uintptr_t key = reinterpret_cast<uintptr_t>(actor);
-    auto& hist = g_History[key];
+    auto& hist = g_ActorHistory[key];
 
+    // Usa posição do ATOR
     SDK::FVector actorPos = actor->K2_GetActorLocation();
     hist.Add(actorPos, team, alive);
 
     if (!hist.Valid())
-        return bonePos;
+        return bone;
 
+    // Distância câmera → ator
     float dist = Length({
-        actorPos.X - camPos.X,
-        actorPos.Y - camPos.Y,
-        actorPos.Z - camPos.Z
+        actorPos.X - cam.X,
+        actorPos.Y - cam.Y,
+        actorPos.Z - cam.Z
         });
 
-    float t = (dist / 12000.f) * prediction;
-    t = std::clamp(t, 0.f, 0.6f);
+    // Tempo de predição
+    float t = std::clamp(
+        (dist / 12000.f) * prediction,
+        0.f,
+        0.6f
+    );
 
+    // Posição futura prevista do ator
     SDK::FVector predictedActor = hist.Predict(t);
 
+    // Delta de movimento do ator
     SDK::FVector delta{
         predictedActor.X - actorPos.X,
         predictedActor.Y - actorPos.Y,
-        0.f
+        predictedActor.Z - actorPos.Z
     };
 
-    float amplify = std::max(1.f, smooth);
-    amplify *= prediction;
+    // Amortecimento vertical adaptativo
+    float verticalSpeed = std::abs(hist.frames.back().vel.Z);
+    float verticalFactor = std::clamp(
+        verticalSpeed / 250.f,
+        0.2f,
+        0.85f
+    );
 
     return {
-        bonePos.X + delta.X * amplify,
-        bonePos.Y + delta.Y * amplify,
-        bonePos.Z
+        bone.X + delta.X,
+        bone.Y + delta.Y,
+        bone.Z + delta.Z * verticalFactor
     };
 }
+
+
 
 // ======================================================
 // AIMBOT
 // ======================================================
+
+static bool IsLockValid(
+    SDK::AActor* A,
+    SDK::USkeletalMeshComponent* Mesh,
+    SDK::APlayerController* PC,
+    const SDK::FVector& CamLoc,
+    const SDK::FRotator& CamRot,
+    float fov)
+{
+    if (!A || !Mesh)
+        return false;
+
+    if (!PC->LineOfSightTo(A, CamLoc, false))
+        return false;
+
+    SDK::FVector test{};
+    if (!ResolveHeadBone(Mesh, test))
+        return false;
+
+    float ang = AngularDistance(CamRot, test, CamLoc);
+
+    // histerese: permite sair um pouco do FOV sem quebrar
+    if (ang > fov * 1.25f)
+        return false;
+
+    return true;
+}
+
 
 void Aimbot::Tick()
 {
@@ -282,9 +500,11 @@ void Aimbot::Tick()
     if (LocalPawn->IsA(SDK::AALS_AnimMan_CharacterBP_C::StaticClass()))
         LocalTeam = (int)static_cast<SDK::AALS_AnimMan_CharacterBP_C*>(LocalPawn)->Team;
 
-    SDK::FVector BestPos{};
+    SDK::FVector BestBone{};
     float BestAng = FLT_MAX;
     SDK::AActor* BestActor = nullptr;
+    int BestTeam = -1;
+    bool BestAlive = false;
 
     auto& Actors = World->PersistentLevel->Actors;
 
@@ -319,34 +539,63 @@ void Aimbot::Tick()
         if (cfg.visibleOnly && !PC->LineOfSightTo(A, CamLoc, false)) continue;
         if (!Mesh) continue;
 
-        SDK::FVector Bone{};
-        if (!GetBone(Mesh, "head", Bone) &&
-            !GetBone(Mesh, "spine_03", Bone))
+        SDK::FVector target{};
+        bool valid = false;
+
+        if (cfg.targetMode == 0)
+            valid = ResolveHeadBone(Mesh, target);
+        else if (cfg.targetMode == 1)
+            valid = ResolveChestBone(Mesh, target);
+        else if (cfg.targetMode == 2)
+            valid = ResolveNearestBone(Mesh, CamRot, CamLoc, target);
+
+        if (!valid)
             continue;
 
-        Bone = PredictPosition(
-            A,
-            Bone,
-            CamLoc,
-            cfg.prediction,
-            cfg.smooth,
-            Team,
-            Alive
-        );
+        constexpr float FOV_SCALE = 0.1f; // 10%
 
-        float ang = AngularDistance(CamRot, Bone, CamLoc);
-        if (ang < cfg.fov && ang < BestAng)
+        float ang = AngularDistance(CamRot, target, CamLoc);
+        float effectiveFov = cfg.fov * FOV_SCALE;
+
+        if (ang < effectiveFov && ang < BestAng)
+
         {
             BestAng = ang;
-            BestPos = Bone;
+            BestBone = target;
             BestActor = A;
+            BestTeam = Team;
+            BestAlive = Alive;
         }
     }
 
     if (!BestActor)
         return;
 
-    auto TargetRot = CalcLookAt(CamLoc, BestPos);
+    // ===============================
+    // CONTROLE DE TROCA DE ALVO
+    // ===============================
+    static uintptr_t lastTarget = 0;
+    uintptr_t currentTarget = reinterpret_cast<uintptr_t>(BestActor);
+
+    if (currentTarget != lastTarget || !BestAlive)
+    {
+        g_ActorHistory[currentTarget].frames.clear();
+        lastTarget = currentTarget;
+    }
+
+    // ===============================
+    // APLICA PREDIÇÃO UMA ÚNICA VEZ
+    // ===============================
+    BestBone = ApplyPrediction(
+        BestActor,
+        BestBone,
+        CamLoc,
+        cfg.prediction,
+        BestTeam,
+        BestAlive
+    );
+
+    auto TargetRot = CalcLookAt(CamLoc, BestBone);
     auto CurRot = PC->GetControlRotation();
 
     SDK::FRotator Delta{
@@ -365,3 +614,4 @@ void Aimbot::Tick()
 
     PC->SetControlRotation(Final);
 }
+

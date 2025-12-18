@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <array>
 #include <mutex>
@@ -6,7 +6,7 @@
 #include "SDK.hpp"
 
 // ======================================================
-// CONFIGURA��O
+// CONFIGURAÇÃO
 // ======================================================
 
 constexpr int MAX_NAME_LEN = 32;
@@ -14,7 +14,6 @@ constexpr int MAX_NAME_LEN = 32;
 // ======================================================
 // BONE IDS (FIXOS, SEM STRING)
 // ======================================================
-
 
 struct BoneDef
 {
@@ -60,27 +59,39 @@ enum ActorFlags : uint8_t
 };
 
 // ======================================================
-// CACHE DE ENTIDADE (INTERNO)
+// CACHE DE ENTIDADE (INTERNO → EXPORTÁVEL)
 // ======================================================
 
 struct CachedActor
 {
-    // ponteiros internos (NUNCA exportar)
+    // --------------------------------------------------
+    // ponteiros internos (NUNCA exportar diretamente)
+    // --------------------------------------------------
     SDK::AActor* Actor = nullptr;
     SDK::APawn* Pawn = nullptr;
     SDK::APlayerState* PlayerState = nullptr;
 
-    // dados export�veis
-    char Name[MAX_NAME_LEN]{};
-    int Team = -1;
+    // --------------------------------------------------
+    // IDENTIDADE (EXPORTÁVEL)
+    // --------------------------------------------------
+    uint64_t ActorAddress = 0;   // endereço do AActor (ID estável)
+
+    // --------------------------------------------------
+    // dados exportáveis
+    // --------------------------------------------------
+    char  Name[MAX_NAME_LEN]{};
+    int   Team = -1;
     float Health = 0.0f;
-    SDK::FVector Location{};
+
+    SDK::FVector Location{};     // fallback (DLL-side)
 
     uint8_t Flags = 0;
 
+    // --------------------------------------------------
     // ossos world-space (array fixo)
+    // --------------------------------------------------
     std::array<SDK::FVector, BONE_COUNT> Bones{};
-    std::array<bool, BONE_COUNT> BoneValid{};
+    std::array<bool, BONE_COUNT>         BoneValid{};
 };
 
 // ======================================================
@@ -89,19 +100,27 @@ struct CachedActor
 
 struct LocalPlayerData
 {
+    // --------------------------------------------------
     // ponteiros internos
+    // --------------------------------------------------
     SDK::APlayerController* Controller = nullptr;
     SDK::APawn* Pawn = nullptr;
     SDK::APlayerState* PlayerState = nullptr;
 
-    // dados export�veis
-    SDK::FVector Location{};
-    SDK::FVector CameraLocation{};
-    SDK::FRotator CameraRotation{};
-    float CameraFOV = 0.0f; // <<< FOV REAL DO POV
-    int Team; // <<< ADICIONAR
-};
+    // --------------------------------------------------
+    // IDENTIDADE (EXPORTÁVEL)
+    // --------------------------------------------------
+    uint64_t ActorAddress = 0;   // endereço do Pawn / AActor local
 
+    // --------------------------------------------------
+    // dados exportáveis
+    // --------------------------------------------------
+    SDK::FVector  Location{};
+    SDK::FVector  CameraLocation{};
+    SDK::FRotator CameraRotation{};
+    float         CameraFOV = 0.0f;
+    int           Team = -1;
+};
 
 // ======================================================
 // CACHE GLOBAL
@@ -111,7 +130,7 @@ namespace Cache
 {
     extern std::mutex DataMutex;
 
-    extern LocalPlayerData Local;
+    extern LocalPlayerData        Local;
     extern std::vector<CachedActor> Players;
     extern std::vector<CachedActor> Bots;
 

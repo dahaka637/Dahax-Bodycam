@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstdint>
 
 // ======================================================
@@ -11,7 +11,7 @@ constexpr uint32_t SHARED_MAX_NAME = 32;
 constexpr uint32_t SHARED_BONE_COUNT = 17;
 
 // ======================================================
-// TIPOS B�SICOS (IPC-SAFE)
+// TIPOS BÁSICOS (IPC-SAFE)
 // ======================================================
 
 #pragma pack(push, 1)
@@ -47,13 +47,21 @@ enum SharedActorFlags : uint8_t
 
 struct SharedActor
 {
+    // --------------------------------------------------
+    // IDENTIDADE (NOVO)
+    // --------------------------------------------------
+    uint64_t actorAddress;     // <<< ENDEREÇO DO AActor (ID estável)
+
+    // --------------------------------------------------
+    // dados existentes
+    // --------------------------------------------------
     char    name[SHARED_MAX_NAME];
 
     int32_t team;
     float   health;
     uint8_t flags;
 
-    SharedVec3 location;
+    SharedVec3 location;       // fallback (DLL)
 
     SharedVec3 bones[SHARED_BONE_COUNT];
     uint8_t    boneValid[SHARED_BONE_COUNT];
@@ -65,6 +73,14 @@ struct SharedActor
 
 struct SharedLocalPlayer
 {
+    // --------------------------------------------------
+    // IDENTIDADE (NOVO)
+    // --------------------------------------------------
+    uint64_t actorAddress;     // <<< ENDEREÇO DO Pawn local
+
+    // --------------------------------------------------
+    // dados existentes
+    // --------------------------------------------------
     SharedVec3     location;
     SharedVec3     cameraLocation;
     SharedRotator  cameraRotation;
@@ -78,7 +94,7 @@ struct SharedLocalPlayer
 
 struct SharedPayload
 {
-    uint32_t seq;        // <<< SEQLOCK (�mpar = escrevendo / par = est�vel)
+    uint32_t seq;        // <<< SEQLOCK (ímpar = escrevendo / par = estável)
     uint32_t frameId;    // ID do frame completo
 
     SharedLocalPlayer local;
@@ -91,6 +107,10 @@ struct SharedPayload
 };
 
 #pragma pack(pop)
+
+// ======================================================
+// AIMBOT CONFIG (EXTERNO → DLL)
+// ======================================================
 
 #pragma pack(push, 1)
 
@@ -109,3 +129,12 @@ struct SharedAimbotConfig
 };
 
 #pragma pack(pop)
+
+// ======================================================
+// SANITY CHECKS (RECOMENDADO)
+// ======================================================
+
+static_assert(sizeof(uint8_t) == 1, "uint8_t deve ter 1 byte");
+static_assert(sizeof(uint64_t) == 8, "uint64_t deve ter 8 bytes");
+static_assert(sizeof(SharedVec3) == 12, "SharedVec3 layout inválido");
+static_assert(sizeof(SharedRotator) == 12, "SharedRotator layout inválido");

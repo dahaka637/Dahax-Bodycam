@@ -44,15 +44,13 @@ bool ESPHelper::IsValidFOV(float fov)
     return fov > 1.0f && fov < 179.0f;
 }
 
-
-
 bool ESPHelper::WorldToScreen(
     const Vec3& world,
     ImVec2& out
 )
 {
     auto& camMgr = Offsets::GetCameraManager();
-    if (!camMgr.IsValid())
+    if (!camMgr.EnsureValid())
         return false;
 
     auto camLocD = camMgr.ReadLocation();
@@ -82,7 +80,6 @@ bool ESPHelper::WorldToScreen(
     float cy = cosf(yaw);
     float sy = sinf(yaw);
 
-    // Base real do Unreal Engine
     Vec3 forward{ cp * cy, cp * sy, sp };
     Vec3 right{ -sy, cy, 0.f };
     Vec3 up{
@@ -109,7 +106,6 @@ bool ESPHelper::WorldToScreen(
 
     return true;
 }
-
 
 // ======================================================
 // WorldToScreen seguro

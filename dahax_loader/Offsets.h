@@ -1,4 +1,4 @@
-// Offsets.h
+﻿// Offsets.h
 #pragma once
 
 #include <Windows.h>
@@ -41,18 +41,27 @@ namespace Offsets
     // APlayerCameraManager
     // ======================================================
     inline constexpr uint64_t CameraCachePrivate = 0x1410;
-    inline constexpr uint64_t POV_Offset = 0x10; // CameraCachePrivate.POV
+    inline constexpr uint64_t POV_Offset = 0x10;
 
     // ======================================================
-    // POV OFFSETS (IGUAL AO PYTHON)
+    // POV
     // ======================================================
     inline constexpr uint64_t POV_Location = 0x00; // double x3
     inline constexpr uint64_t POV_Rotation = 0x18; // double x3
     inline constexpr uint64_t POV_FOV = 0x30; // float
 
     // ======================================================
+    // ACTOR / COMPONENT
+    // ======================================================
+    inline constexpr uint64_t RootComponent = 0x01B8;
+    inline constexpr uint64_t RelativeLocation = 0x0128;
+
+    // ======================================================
     // ESTRUTURAS (IGUAIS AO PYTHON)
     // ======================================================
+
+
+
 #pragma pack(push, 1)
 
     struct FVector
@@ -82,7 +91,15 @@ namespace Offsets
     };
 
     // ======================================================
-    // CAMERA MANAGER (EXTERNAL � PYTHON-STYLE)
+    // HELPERS BÁSICOS
+    // ======================================================
+    inline bool IsValidPtr(uintptr_t p)
+    {
+        return p && p > 0x10000;
+    }
+
+    // ======================================================
+    // CAMERA MANAGER (LEITURA)
     // ======================================================
     class CameraManager
     {
@@ -90,62 +107,86 @@ namespace Offsets
         HANDLE    m_hProcess = nullptr;
         uintptr_t m_base = 0;
         uintptr_t m_pov = 0;
+        uintptr_t m_lastWorld = 0; // <<< NOVO
 
-        bool IsValidPtr(uintptr_t p) const
-        {
-            return p && p > 0x10000;
-        }
 
     public:
         bool Initialize(HANDLE hProcess, uintptr_t base)
         {
             m_hProcess = hProcess;
             m_base = base;
+            m_pov = 0;
 
             uintptr_t world = 0;
-            if (!ReadProcessMemory(m_hProcess, (LPCVOID)(m_base + GWorld),
-                &world, sizeof(world), nullptr))
+            if (!ReadProcessMemory(
+                m_hProcess,
+                (LPCVOID)(m_base + GWorld),
+                &world,
+                sizeof(world),
+                nullptr))
                 return false;
 
             if (!IsValidPtr(world))
                 return false;
 
+            // >>> DETECTA TROCA DE PARTIDA
+            if (world != m_lastWorld)
+            {
+                m_lastWorld = world;
+            }
+
+
             uintptr_t gameInstance = 0;
-            ReadProcessMemory(m_hProcess,
+            ReadProcessMemory(
+                m_hProcess,
                 (LPCVOID)(world + OwningGameInstance),
-                &gameInstance, sizeof(gameInstance), nullptr);
+                &gameInstance,
+                sizeof(gameInstance),
+                nullptr);
 
             if (!IsValidPtr(gameInstance))
                 return false;
 
             TArray localPlayers{};
-            ReadProcessMemory(m_hProcess,
+            ReadProcessMemory(
+                m_hProcess,
                 (LPCVOID)(gameInstance + LocalPlayers),
-                &localPlayers, sizeof(localPlayers), nullptr);
+                &localPlayers,
+                sizeof(localPlayers),
+                nullptr);
 
             if (localPlayers.Count <= 0 || !IsValidPtr(localPlayers.Data))
                 return false;
 
             uintptr_t localPlayer = 0;
-            ReadProcessMemory(m_hProcess,
+            ReadProcessMemory(
+                m_hProcess,
                 (LPCVOID)(localPlayers.Data),
-                &localPlayer, sizeof(localPlayer), nullptr);
+                &localPlayer,
+                sizeof(localPlayer),
+                nullptr);
 
             if (!IsValidPtr(localPlayer))
                 return false;
 
             uintptr_t controller = 0;
-            ReadProcessMemory(m_hProcess,
+            ReadProcessMemory(
+                m_hProcess,
                 (LPCVOID)(localPlayer + PlayerController),
-                &controller, sizeof(controller), nullptr);
+                &controller,
+                sizeof(controller),
+                nullptr);
 
             if (!IsValidPtr(controller))
                 return false;
 
             uintptr_t camMgr = 0;
-            ReadProcessMemory(m_hProcess,
+            ReadProcessMemory(
+                m_hProcess,
                 (LPCVOID)(controller + PlayerCameraManager),
-                &camMgr, sizeof(camMgr), nullptr);
+                &camMgr,
+                sizeof(camMgr),
+                nullptr);
 
             if (!IsValidPtr(camMgr))
                 return false;
@@ -156,10 +197,41 @@ namespace Offsets
 
         bool IsValid() const
         {
-            return m_hProcess && IsValidPtr(m_pov);
+            return m_hProcess && m_base && IsValidPtr(m_pov);
         }
 
-        // ===================== LEITURA =====================
+        bool EnsureValid()
+        {
+            if (!m_hProcess || !m_base)
+                return false;
+
+            uintptr_t world = 0;
+            if (!ReadProcessMemory(
+                m_hProcess,
+                (LPCVOID)(m_base + GWorld),
+                &world,
+                sizeof(world),
+                nullptr))
+                return false;
+
+            if (!IsValidPtr(world))
+                return false;
+
+            if (world != m_lastWorld)
+            {
+                m_lastWorld = world;
+                return Initialize(m_hProcess, m_base);
+            }
+
+            float fov = ReadFOV();
+            if (fov < 10.f || fov > 170.f)
+                return Initialize(m_hProcess, m_base);
+
+            return true;
+        }
+
+
+
         FVector ReadLocation() const
         {
             FVector v{};
@@ -204,27 +276,40 @@ namespace Offsets
 
             return fov;
         }
-
-        // ===================== ESCRITA =====================
-        bool WriteRotation(const FRotator& rot) const
-        {
-            if (!IsValid()) return false;
-
-            SIZE_T bw = 0;
-            return WriteProcessMemory(
-                m_hProcess,
-                (LPVOID)(m_pov + POV_Rotation),
-                &rot,
-                sizeof(rot),
-                &bw) && bw == sizeof(rot);
-        }
-
-        bool WriteAngles(double pitch, double yaw, double roll = 0.0) const
-        {
-            FRotator r{ pitch, yaw, roll };
-            return WriteRotation(r);
-        }
     };
+
+    // ======================================================
+    // ACTOR HELPERS (LEITURA EM TEMPO REAL)
+    // ======================================================
+    inline bool ReadActorLocation(
+        HANDLE hProcess,
+        uint64_t actorAddress,
+        FVector& outLocation)
+    {
+        outLocation = {};
+
+        if (!IsValidPtr(actorAddress))
+            return false;
+
+        uintptr_t rootComponent = 0;
+        if (!ReadProcessMemory(
+            hProcess,
+            (LPCVOID)(actorAddress + RootComponent),
+            &rootComponent,
+            sizeof(rootComponent),
+            nullptr))
+            return false;
+
+        if (!IsValidPtr(rootComponent))
+            return false;
+
+        return ReadProcessMemory(
+            hProcess,
+            (LPCVOID)(rootComponent + RelativeLocation),
+            &outLocation,
+            sizeof(outLocation),
+            nullptr);
+    }
 
     // ======================================================
     // SINGLETON

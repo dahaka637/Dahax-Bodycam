@@ -4,9 +4,12 @@
 #include "imgui.h"
 #include "ExternalCache.h"
 #include "ESPHelper.h"
+#include "Offsets.h"
+
 #include <algorithm>
 #include <vector>
 #include <cstdio>
+#include <Windows.h>
 
 // ======================================================
 // CONFIG VISUAL
@@ -18,6 +21,25 @@ static constexpr float DIST_OFFSET_Y = 6.0f;
 
 // fallback em cm (Unreal)
 static constexpr float FALLBACK_HEAD_OFFSET = 70.0f;
+
+// ======================================================
+// PROCESS HANDLE (ABERTO UMA VEZ)
+// ======================================================
+static HANDLE GetGameProcess()
+{
+    static HANDLE hProc = nullptr;
+
+    if (!hProc)
+    {
+        hProc = OpenProcess(
+            PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+            FALSE,
+            GetProcessId(FindWindowW(L"UnrealWindow", nullptr))
+        );
+    }
+
+    return hProc;
+}
 
 // ======================================================
 // LIGAÇÕES DO ESQUELETO
@@ -70,15 +92,15 @@ static void DrawCornerBox(
 }
 
 // ======================================================
-// HEAD / FOOT (DINÂMICO)
+// HEAD / FOOT (AGORA COM POSIÇÃO RESOLVIDA)
 // ======================================================
 static bool GetBoxPoints(
     const ExternalActor& a,
+    const Vec3& actorPos,
     ImVec2& outTop,
     ImVec2& outBottom
 )
 {
-    // HEAD
     ImVec2 head{};
     bool hasHead = false;
 
@@ -88,9 +110,9 @@ static bool GetBoxPoints(
     if (!hasHead)
     {
         Vec3 fakeHead{
-            a.location.x,
-            a.location.y,
-            a.location.z + FALLBACK_HEAD_OFFSET
+            actorPos.x,
+            actorPos.y,
+            actorPos.z + FALLBACK_HEAD_OFFSET
         };
         hasHead = ESPHelper::WorldToScreen(fakeHead, head);
     }
@@ -98,8 +120,7 @@ static bool GetBoxPoints(
     if (!hasHead)
         return false;
 
-    // FOOT
-    float minZ = a.location.z;
+    float minZ = actorPos.z;
     bool hasFoot = false;
 
     for (int idx : { 13, 16 })
@@ -107,7 +128,6 @@ static bool GetBoxPoints(
         if (idx < BONE_COUNT && a.boneValid[idx])
         {
             minZ = (std::min)(minZ, a.bones[idx].z);
-
             hasFoot = true;
         }
     }
@@ -116,8 +136,8 @@ static bool GetBoxPoints(
         return false;
 
     Vec3 footWorld{
-        a.location.x,
-        a.location.y,
+        actorPos.x,
+        actorPos.y,
         minZ
     };
 
@@ -179,8 +199,22 @@ static void DrawSnapline(
     draw->AddLine(from, to, color, LINE_THICKNESS);
 }
 
+static float BoneThickness(int a, int b)
+{
+    // tronco (pelvis, spine, chest, neck, head)
+    if (a <= 2 && b <= 2)
+        return 2.4f;
+
+    // membros
+    if (a >= 3)
+        return 1.4f;
+
+    return 1.8f;
+}
+
+
 // ======================================================
-// SKELETON
+// SKELETON (CONECTADO / ORGÂNICO)
 // ======================================================
 static void DrawSkeleton(
     ImDrawList* draw,
@@ -197,58 +231,86 @@ static void DrawSkeleton(
         if (!ESPHelper::WorldToScreen(a.bones[link.a], p1)) continue;
         if (!ESPHelper::WorldToScreen(a.bones[link.b], p2)) continue;
 
-        draw->AddLine(p1, p2, color, LINE_THICKNESS);
+        float thickness = BoneThickness(link.a, link.b);
+
+        // Segmento principal (osso)
+        draw->AddLine(
+            p1,
+            p2,
+            color,
+            thickness
+        );
+
+        // Junta A
+        draw->AddCircleFilled(
+            p1,
+            thickness * 0.6f,
+            color,
+            10
+        );
+
+        // Junta B
+        draw->AddCircleFilled(
+            p2,
+            thickness * 0.6f,
+            color,
+            10
+        );
     }
 }
 
+
+
 // ======================================================
-// ESP PRINCIPAL
+// ESP PRINCIPAL (POSIÇÃO FRESH AQUI)
 // ======================================================
 void ESP::Render()
 {
-    // 🔴 ESP TOTALMENTE CONTROLADO PELO MENU
     if (!Menu::ESP.Enabled)
         return;
 
-
     ImDrawList* draw = ImGui::GetForegroundDrawList();
-    // ======================================================
-    // DESENHO DO FOV DO AIMBOT
-    // ======================================================
-    if (Menu::Aimbot.Enabled && Menu::Aimbot.DrawFov)
-    {
-        ImVec2 screenCenter{
-            ImGui::GetIO().DisplaySize.x * 0.5f,
-            ImGui::GetIO().DisplaySize.y * 0.5f
-        };
-
-        // Conversão simples: FOV -> pixels
-        // Ajuste o multiplicador se quiser mais/menos sensibilidade visual
-        float radius = Menu::Aimbot.Fov;
-
-        draw->AddCircle(
-            screenCenter,
-            radius,
-            IM_COL32(255, 255, 255, 160),
-            128,            // segmentos (quanto maior, mais liso)
-            1.5f            // espessura
-        );
-    }
-
 
     ExternalLocalPlayer local = ExternalCache::GetLocal();
     auto players = ExternalCache::GetPlayers();
     auto bots = ExternalCache::GetBots();
 
     bool teamMode = IsTeamMode(local, players);
+    HANDLE hProc = GetGameProcess();
 
     auto DrawEntity = [&](const ExternalActor& a, bool isBot)
         {
             if (!ShouldDrawActor(local, a, teamMode))
                 return;
 
+            // ==================================================
+            // RESOLVE POSIÇÃO EM TEMPO REAL
+            // ==================================================
+            Vec3 actorPos{};
+            bool hasFresh = false;
+
+            Offsets::FVector fresh{};
+            if (hProc &&
+                a.actorAddress &&
+                Offsets::ReadActorLocation(hProc, a.actorAddress, fresh))
+            {
+                actorPos = {
+                    (float)fresh.X,
+                    (float)fresh.Y,
+                    (float)fresh.Z
+                };
+                hasFresh = true;
+            }
+
+            // fallback SOMENTE se RPM falhar
+            if (!hasFresh)
+            {
+                actorPos = a.location;
+            }
+
+
             ImVec2 top{}, bottom{};
-            if (!GetBoxPoints(a, top, bottom))
+            if (!GetBoxPoints(a, actorPos, top, bottom))
                 return;
 
             ImU32 mainColor =
@@ -256,11 +318,9 @@ void ESP::Render()
                 ? IM_COL32(200, 255, 200, 255)
                 : IM_COL32(255, 120, 120, 255);
 
-            // BOX
             if (Menu::ESP.Box)
                 DrawCornerBox(draw, top, bottom, mainColor, BOX_THICKNESS);
 
-            // SNAPLINE
             if (Menu::ESP.Snapline)
             {
                 ImVec2 screenCenter{
@@ -270,7 +330,6 @@ void ESP::Render()
                 DrawSnapline(draw, screenCenter, bottom, mainColor);
             }
 
-            // NAME
             if (Menu::ESP.Name)
             {
                 const char* label = isBot ? "BOT" : a.name;
@@ -283,10 +342,9 @@ void ESP::Render()
                 );
             }
 
-            // DISTANCE
             if (Menu::ESP.Distance)
             {
-                float distM = ESPHelper::Distance3D(local.location, a.location) / 100.f;
+                float distM = ESPHelper::Distance3D(local.location, actorPos) / 100.f;
 
                 char buf[32];
                 sprintf_s(buf, "%.1fm", distM);
@@ -299,7 +357,6 @@ void ESP::Render()
                 );
             }
 
-            // SKELETON
             if (Menu::ESP.Skeleton)
                 DrawSkeleton(draw, a, mainColor);
         };

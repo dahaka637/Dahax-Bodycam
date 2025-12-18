@@ -17,7 +17,6 @@ void SharedSender::Tick()
     if (state == SharedState::Stopped)
         return;
 
-
     // ==================================================
     // Snapshot thread-safe do cache
     // ==================================================
@@ -42,6 +41,10 @@ void SharedSender::Tick()
     // ==================================================
     // LOCAL PLAYER
     // ==================================================
+
+    // >>> ENDEREÇO DO ATOR LOCAL
+    out.local.actorAddress = local.ActorAddress;
+
     out.local.location = {
         (float)local.Location.X,
         (float)local.Location.Y,
@@ -79,13 +82,15 @@ void SharedSender::Tick()
 
         std::memset(&dst, 0, sizeof(dst));
 
+        // >>> ENDEREÇO DO ATOR
+        dst.actorAddress = src.ActorAddress;
+
         strncpy_s(
             dst.name,
             SHARED_MAX_NAME,
             src.Name,
             _TRUNCATE
         );
-
 
         dst.team = src.Team;
         dst.health = src.Health;
@@ -131,13 +136,15 @@ void SharedSender::Tick()
 
         std::memset(&dst, 0, sizeof(dst));
 
+        // >>> ENDEREÇO DO ATOR (BOT)
+        dst.actorAddress = src.ActorAddress;
+
         strncpy_s(
             dst.name,
             SHARED_MAX_NAME,
             src.Name,
             _TRUNCATE
         );
-
 
         dst.team = src.Team;
         dst.health = src.Health;

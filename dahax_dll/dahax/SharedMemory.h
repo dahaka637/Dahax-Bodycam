@@ -68,13 +68,21 @@ enum SharedActorFlags : uint8_t
 
 struct SharedActor
 {
-    char name[SHARED_MAX_NAME];   // sempre null-terminated
+    // --------------------------------------------------
+    // IDENTIDADE
+    // --------------------------------------------------
+    uint64_t actorAddress;     // <<< ENDEREÇO DO AActor (ID estável)
+
+    // --------------------------------------------------
+    // dados existentes
+    // --------------------------------------------------
+    char name[SHARED_MAX_NAME];
 
     int32_t team;
     float   health;
     uint8_t flags;
 
-    SharedVec3 location;
+    SharedVec3 location;       // fallback (DLL-side)
 
     SharedVec3 bones[SHARED_BONE_COUNT];
     uint8_t    boneValid[SHARED_BONE_COUNT];
@@ -86,6 +94,14 @@ struct SharedActor
 
 struct SharedLocalPlayer
 {
+    // --------------------------------------------------
+    // IDENTIDADE
+    // --------------------------------------------------
+    uint64_t actorAddress;     // <<< ENDEREÇO DO Pawn local
+
+    // --------------------------------------------------
+    // dados existentes
+    // --------------------------------------------------
     SharedVec3     location;
     SharedVec3     cameraLocation;
     SharedRotator  cameraRotation;
@@ -99,8 +115,8 @@ struct SharedLocalPlayer
 
 struct SharedPayload
 {
-    volatile uint32_t seq;        // seqlock (ímpar = escrita / par = estável)
-    uint32_t          frameId;    // incrementado SOMENTE após frame completo
+    volatile uint32_t seq;
+    uint32_t          frameId;
 
     SharedLocalPlayer local;
 
@@ -117,22 +133,16 @@ struct SharedPayload
 
 struct SharedAimbotConfig
 {
-    uint8_t enabled;        // 0 / 1
-    uint8_t hotkeyDown;     // 0 / 1
-    uint8_t targetMode;     // enum
-    uint8_t aimAtTeam;      // 0 / 1
-    uint8_t visibleOnly;    // 0 / 1
+    uint8_t enabled;
+    uint8_t hotkeyDown;
+    uint8_t targetMode;
+    uint8_t aimAtTeam;
+    uint8_t visibleOnly;
 
     float fov;
     float smooth;
-
-    // ===============================
-    // PREDIÇÃO (0 = OFF)
-    // ===============================
     float prediction;
 };
-
-
 
 // ======================================================
 // BLOCO DE CONTROLE COMPARTILHADO
@@ -148,9 +158,8 @@ struct SharedControlBlock
     volatile LONG requestStart;
     volatile LONG requestStop;
 
-    SharedAimbotConfig aimbot; // <<< NOVO BLOCO (EXTERNO → DLL)
-
-    SharedPayload payload;     // <<< STREAMING (DLL → EXTERNO)
+    SharedAimbotConfig aimbot;
+    SharedPayload      payload;
 };
 
 #pragma pack(pop)
@@ -165,13 +174,11 @@ namespace SharedMemory
     void Shutdown();
 
     SharedState GetState();
-
-    // Retorna ponteiro para o bloco compartilhado
     SharedControlBlock* GetBlock();
 }
 
 // ======================================================
-// SANITY CHECKS (DEBUG / COMPILE-TIME)
+// SANITY CHECKS
 // ======================================================
 
 static_assert(sizeof(uint8_t) == 1, "uint8_t deve ter 1 byte");

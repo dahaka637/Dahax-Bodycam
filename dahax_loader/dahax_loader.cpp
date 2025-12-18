@@ -125,31 +125,51 @@ static HWND FindMainWindowByPID(DWORD pid)
 
 
 
-// ======================================================
-// WinMain
-// ======================================================
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
     AttachConsole();
     printf("[Overlay ESP] Iniciando...\n");
 
-    // ==================================================
-    // Aguarda jogo
-    // ==================================================
-    printf("Aguardando Bodycam...\n");
+    printf("[INFO] Procurando Bodycam...\n");
 
-    DWORD pid = 0;
-    while (!(pid = GetProcessId(L"Bodycam-Win64-Shipping.exe")))
+    DWORD pid = GetProcessId(L"Bodycam-Win64-Shipping.exe");
+    bool gameAlreadyRunning = false;
+
+    if (pid)
     {
-        Sleep(100);
-        if (GetAsyncKeyState(VK_F10) & 1)
+        gameAlreadyRunning = true;
+        printf("[INFO] Jogo já estava em execução (PID %lu)\n", pid);
+    }
+    else
+    {
+        printf("[INFO] Jogo não encontrado, aguardando iniciar...\n");
+
+        while (!(pid = GetProcessId(L"Bodycam-Win64-Shipping.exe")))
         {
-            printf("[USER] Encerrando manualmente\n");
-            return 0;
+            Sleep(100);
+
+            if (GetAsyncKeyState(VK_F10) & 1)
+            {
+                printf("[USER] Encerrando manualmente\n");
+                return 0;
+            }
         }
+
+        printf("[INFO] Jogo iniciado (PID %lu)\n", pid);
     }
 
-    printf("Jogo encontrado (PID %lu)\n", pid);
+    // ==================================================
+    // Espera inicial SOMENTE se o jogo acabou de abrir
+    // ==================================================
+    if (!gameAlreadyRunning)
+    {
+        printf("[INFO] Aguardando inicializacao completa do jogo (5s)...\n");
+        Sleep(5000);
+    }
+    else
+    {
+        printf("[INFO] Pulando espera inicial (jogo já estava aberto)\n");
+    }
 
     // ==================================================
     // Abre processo
@@ -184,8 +204,80 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     printf("[INFO] BaseAddress = 0x%p\n", (void*)baseAddress);
 
     // ==================================================
-    // Inicializa leitura direta da câmera (POV)
+    // Injeção
     // ==================================================
+    printf("[INFO] Verificando DLL...\n");
+
+    if (!SharedMemory::IsAlreadyInjected())
+    {
+        printf("[INFO] Injetando DLL...\n");
+
+        InjectResult injectResult = Injector::InjectWhenReady(
+            L"Bodycam-Win64-Shipping.exe",
+            L"dahax.dll",
+            3000
+        );
+
+        if (injectResult != InjectResult::Success)
+        {
+            printf("[ERRO] Falha na injeção (%d)\n", (int)injectResult);
+            CloseHandle(hProcess);
+            return 0;
+        }
+
+        printf("[INFO] DLL injetada com sucesso\n");
+    }
+    else
+    {
+        printf("[INFO] DLL já estava injetada\n");
+    }
+
+    // ==================================================
+    // Aguarda DLL SOMENTE se foi injetada agora
+    // ==================================================
+    if (!gameAlreadyRunning)
+    {
+        printf("[INFO] Aguardando inicializacao da DLL (5s)...\n");
+        Sleep(5000);
+    }
+    else
+    {
+        printf("[INFO] Pulando espera de DLL\n");
+    }
+
+    // ==================================================
+    // SharedMemory
+    // ==================================================
+    printf("[INFO] Conectando SharedMemory...\n");
+
+    DWORD smStart = GetTickCount();
+    while (!SharedMemory::Connect())
+    {
+        Sleep(250);
+
+        if (GetTickCount() - smStart > 10000)
+        {
+            printf("[ERRO] Timeout ao conectar SharedMemory\n");
+            CloseHandle(hProcess);
+            return 0;
+        }
+    }
+
+    printf("[INFO] SharedMemory conectada\n");
+
+    // ==================================================
+    // Offsets / Camera
+    // ==================================================
+    if (!gameAlreadyRunning)
+    {
+        printf("[INFO] Aguardando estabilizacao de offsets e camera (4s)...\n");
+        Sleep(4000);
+    }
+    else
+    {
+        printf("[INFO] Pulando espera de offsets/camera\n");
+    }
+
     printf("[INFO] Inicializando CameraManager...\n");
 
     if (!Offsets::InitializeCameraSystem(hProcess, baseAddress))
@@ -198,50 +290,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     printf("[INFO] CameraManager inicializado com sucesso\n");
 
     // ==================================================
-    // Injeção
+    // Cache externo
     // ==================================================
-    printf("Verificando se DLL já está ativa...\n");
-
-    if (!SharedMemory::IsAlreadyInjected())
-    {
-        printf("Injetando DLL...\n");
-        InjectResult injectResult = Injector::InjectWhenReady(
-            L"Bodycam-Win64-Shipping.exe",
-            L"dahax.dll",
-            2000
-        );
-
-        if (injectResult != InjectResult::Success)
-        {
-            printf("[ERRO] Falha na injeção (%d)\n", (int)injectResult);
-            CloseHandle(hProcess);
-            return 0;
-        }
-
-        printf("DLL injetada com sucesso!\n");
-        Sleep(1000);
-    }
-    else
-    {
-        printf("[INFO] DLL já está injetada.\n");
-    }
-
-    // ==================================================
-    // SharedMemory e Cache
-    // ==================================================
-    printf("Conectando SharedMemory...\n");
-    while (!SharedMemory::Connect())
-    {
-        printf("[EXT][SM] aguardando DLL...\n");
-        Sleep(500);
-    }
-
     SharedMemory::RequestStart();
     ExternalCache::Initialize();
-
-    printf("SharedMemory conectada\n");
-
-
 
     // ==================================================
     // Overlay
@@ -253,7 +305,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
         Sleep(50);
     }
 
-    printf("Janela do jogo encontrada: 0x%p\n", gameWindow);
+    printf("[INFO] Janela do jogo encontrada: 0x%p\n", gameWindow);
 
     if (!g_Overlay.Initialize(gameWindow))
     {
@@ -263,26 +315,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     }
 
     g_Overlay.SetClickThrough(true);
-    printf("Overlay inicializado com sucesso\n");
+    printf("[INFO] Overlay inicializado\n");
 
     // ==================================================
-    // TIMER DE UPDATE
+    // Timer
     // ==================================================
     LARGE_INTEGER freq{};
     LARGE_INTEGER lastUpdate{};
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&lastUpdate);
+
     constexpr double UPDATE_INTERVAL_MS = 1000.0 / 160.0;
 
     // ==================================================
-    // LOOP PRINCIPAL
+    // Loop principal
     // ==================================================
     MSG msg{};
     while (true)
     {
-        // ================= GAME ALIVE CHECK =================
-        DWORD gameState = WaitForSingleObject(hProcess, 0);
-        if (gameState == WAIT_OBJECT_0)
+        if (WaitForSingleObject(hProcess, 0) == WAIT_OBJECT_0)
         {
             printf("[INFO] Jogo foi fechado\n");
             break;
@@ -300,9 +351,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
             break;
         }
 
-        // ================= UPDATE =================
         LARGE_INTEGER now;
         QueryPerformanceCounter(&now);
+
         double deltaMs =
             (double)(now.QuadPart - lastUpdate.QuadPart) * 1000.0 /
             (double)freq.QuadPart;
@@ -319,7 +370,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
             lastUpdate = now;
         }
 
-        // ================= RENDER =================
         g_Overlay.BeginFrame();
 
         static int fps = 0;
@@ -346,9 +396,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     }
 
     // ==================================================
-    // SHUTDOWN
+    // Shutdown
     // ==================================================
-    printf("\n[SHUTDOWN] Finalizando...\n");
+    printf("[SHUTDOWN] Finalizando...\n");
 
     SharedMemory::RequestStop();
     SharedMemory::Disconnect();

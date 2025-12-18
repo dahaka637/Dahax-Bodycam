@@ -97,6 +97,7 @@ void ExternalCache::Update()
     // ------------------
     // LOCAL PLAYER
     // ------------------
+    g_local.actorAddress = snapshot.local.actorAddress; // <<< NOVO
 
     g_local.location = {
         snapshot.local.location.x,
@@ -130,6 +131,8 @@ void ExternalCache::Update()
     {
         const SharedActor& src = snapshot.players[i];
         ExternalActor dst{};
+
+        dst.actorAddress = src.actorAddress; // <<< NOVO
 
         std::memcpy(dst.name, src.name, MAX_NAME_LEN);
         dst.name[MAX_NAME_LEN - 1] = '\0';
@@ -171,6 +174,8 @@ void ExternalCache::Update()
     {
         const SharedActor& src = snapshot.bots[i];
         ExternalActor dst{};
+
+        dst.actorAddress = src.actorAddress; // <<< NOVO
 
         std::memcpy(dst.name, src.name, MAX_NAME_LEN);
         dst.name[MAX_NAME_LEN - 1] = '\0';
